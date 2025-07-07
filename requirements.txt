@@ -1,1 +1,7 @@
-streamlit
+fastapi
+uvicorn
+boto3
+sqlalchemy
+alembic
+python-dotenv
+psycopg2-binary
