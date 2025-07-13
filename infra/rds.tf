@@ -1,11 +1,20 @@
+resource "aws_db_subnet_group" "ahtr_subnet_group" {
+  name       = "ahtr-subnet-group"
+  subnet_ids = var.subnet_ids
+
+  tags = {
+    Name = "ahtr-db-subnets"
+  }
+}
+
 resource "aws_db_instance" "ahtr_postgres" {
-  identifier         = "ahtr-db"
-  engine             = "postgres"
-  instance_class     = "db.t3.micro"
-  allocated_storage  = 20
-  name               = var.db_name
-  username           = var.db_user
-  password           = var.db_password
+  identifier          = "ahtr-db"
+  engine              = "postgres"
+  instance_class      = "db.t3.micro"
+  allocated_storage   = 20
+  name                = var.db_name
+  username            = var.db_user
+  password            = var.db_password
   publicly_accessible = true
   skip_final_snapshot = true
 
