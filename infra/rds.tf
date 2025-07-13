@@ -32,3 +32,8 @@ resource "aws_security_group" "db_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+resource "aws_db_subnet_group" "ahtr_subnet_group" {
+  name       = "ahtr-db-subnets"
+  subnet_ids = var.private_subnets
+}
