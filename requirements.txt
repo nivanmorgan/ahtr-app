@@ -7,3 +7,4 @@ python-dotenv
 psycopg2-binary
 gunicorn
 prometheus-fastapi-instrumentator
+fastapi-cache2

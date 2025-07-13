@@ -2,6 +2,8 @@
 
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
 from app.image_router import router as image_router
 from app.db import init_db, engine
 import logging
@@ -23,6 +25,7 @@ async def startup_event():
     init_db()
     Instrumentator().instrument(app).expose(app)
     logger.info("Application startup complete")
+    FastAPICache.init(InMemoryBackend())
 
 app.include_router(image_router, prefix="/api")
 
@@ -58,3 +61,5 @@ def health_check():
         "s3": s3_ok,
         "status": "healthy" if overall else "unhealthy"
     }
+    return {"status": "healthy"}
+
