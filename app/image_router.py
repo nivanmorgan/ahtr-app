@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session
+from fastapi_cache.decorator import cache
 import boto3
 import os
 from sqlalchemy.orm import Session
@@ -11,6 +13,26 @@ router = APIRouter()
 
 s3_client = boto3.client("s3")
 S3_BUCKET = os.getenv("S3_BUCKET_NAME")
+
+from app.db import get_db
+from app.queries import list_images
+
+@router.get("/images")
+@cache(expire=60)
+def get_images(
+    limit: int = Query(10, ge=1, le=100, description="Number of records to return"),
+    offset: int = Query(0, ge=0, description="Number of records to skip"),
+    db: Session = Depends(get_db),
+):
+    images = list_images(db, limit=limit, offset=offset)
+    return [
+        {
+            "image_id": img.image_id,
+            "artwork_id": img.artwork_id,
+            "image_view": img.image_view,
+        }
+        for img in images
+    ]
 
 @router.get("/image")
 def get_image(image_key: str = Query(..., description="S3 key or image ID")):
