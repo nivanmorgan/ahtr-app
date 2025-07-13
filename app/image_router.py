@@ -1,7 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 import boto3
 import os
+from sqlalchemy.orm import Session
+
+from app.db import get_db
+from app.queries import get_image_metadata, search_images
 
 router = APIRouter()
 
@@ -22,3 +26,47 @@ def get_image(image_key: str = Query(..., description="S3 key or image ID")):
         return RedirectResponse(url=url)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Image not found: {str(e)}")
+
+
+@router.get("/images")
+def list_images(
+    image_id: str | None = Query(None, description="Filter by image ID"),
+    artwork_id: str | None = Query(None, description="Filter by artwork ID"),
+    image_view: str | None = Query(None, description="Filter by image view"),
+    db: Session = Depends(get_db),
+):
+    """Return image metadata along with a pre-signed S3 URL."""
+    if not S3_BUCKET:
+        raise HTTPException(status_code=500, detail="S3 bucket not configured")
+
+    images = search_images(db, image_id=image_id, artwork_id=artwork_id, image_view=image_view)
+
+    results = []
+    for img in images:
+        try:
+            url = s3_client.generate_presigned_url(
+                ClientMethod="get_object",
+                Params={"Bucket": S3_BUCKET, "Key": img.image_id},
+                ExpiresIn=300,
+            )
+        except Exception:
+            url = None
+
+        metadata = {
+            "image_id": img.image_id,
+            "artwork_id": img.artwork_id,
+            "image_view": img.image_view,
+        }
+
+        if img.artwork:
+            metadata["artwork"] = {
+                "title": img.artwork.title,
+                "container_artwork_id": img.artwork.container_artwork_id,
+                "creation_date_modifier": img.artwork.creation_date_modifier,
+                "creation_start_date": img.artwork.creation_start_date,
+                "creation_end_date": img.artwork.creation_end_date,
+            }
+
+        results.append({"metadata": metadata, "url": url})
+
+    return results
