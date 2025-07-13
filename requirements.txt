@@ -5,5 +5,6 @@ sqlalchemy
 alembic
 python-dotenv
 psycopg2-binary
-fastapi-cache2
 gunicorn
+prometheus-fastapi-instrumentator
+fastapi-cache2
