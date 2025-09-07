@@ -34,6 +34,18 @@ resource "aws_security_group" "db_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Allow CodeBuild (data import) to access RDS when enabled
+  dynamic "ingress" {
+    for_each = var.enable_data_import_job ? [1] : []
+    content {
+      from_port       = 5432
+      to_port         = 5432
+      protocol        = "tcp"
+      security_groups = [aws_security_group.codebuild_sg[0].id]
+      description     = "CodeBuild import to RDS"
+    }
+  }
+
   egress {
     from_port   = 0
     to_port     = 0

@@ -48,6 +48,15 @@ resource "aws_ecs_task_definition" "ahtr" {
           protocol      = "tcp"
         }
       ]
+      environment = [
+        { name = "S3_BUCKET_NAME", value = var.images_bucket_name },
+        { name = "DB_HOST", value = aws_db_instance.ahtr_postgres.address },
+        { name = "DB_NAME", value = var.db_name },
+        { name = "DB_USER", value = var.db_user }
+      ]
+      secrets = [
+        { name = "DB_PASSWORD", valueFrom = aws_secretsmanager_secret.db_password.arn }
+      ]
     }
   ])
 }
