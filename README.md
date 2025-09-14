@@ -27,3 +27,13 @@ AHTR interactive map !
 - Import CSV to RDS:
   - Via ECS task: `make import-csv CSV_S3=s3://<bucket>/seed.csv DB_USER=... DB_PASSWORD=...`
   - Via CodeBuild: `make import-csv-cb CSV_S3=s3://<bucket>/seed.csv`
+
+## Converting Excel to Importable CSV
+- If your data is in Excel with multiple sheets, use the helper:
+  - Install locally: `pip install pandas openpyxl pyyaml`
+  - Config-driven (recommended):
+    - Edit `data/mapping.example.yaml` to match your sheet names/columns.
+    - `python scripts/xlsx_to_import_csv.py --xlsx "./Data for Transcarta app.xlsx" --config data/mapping.example.yaml --out ./out.csv`
+  - Auto-detect (best-effort):
+    - `python scripts/xlsx_to_import_csv.py --xlsx ./data.xlsx --out ./out.csv`
+  - Then upload the CSV to S3 and run an import (see above).

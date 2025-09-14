@@ -1,0 +1,32 @@
+version: 0.2
+env:
+  variables:
+    CSV_S3: ""
+    DB_URL: ""
+    DB_HOST: ""
+    DB_NAME: ""
+    DB_USER: ""
+    DB_PASSWORD: ""
+phases:
+  install:
+    commands:
+      - python --version
+      - pip install --no-cache-dir -r requirements.txt
+  build:
+    commands:
+      - |
+        if [ -z "$CSV_S3" ]; then
+          echo "CSV_S3 is required (s3://bucket/key.csv)" >&2; exit 1; fi
+      - |
+        if [ -z "$DB_URL" ]; then
+          if [ -z "$DB_HOST" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ]; then
+            echo "Either DB_URL or DB_HOST/DB_NAME/DB_USER/DB_PASSWORD must be set" >&2; exit 1;
+          fi
+          export DB_URL="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:5432/$DB_NAME"
+        fi
+      - echo "Starting import from $CSV_S3 to $DB_URL"
+      - python scripts/import_csv.py --csv "$CSV_S3" --db "$DB_URL"
+artifacts:
+  files:
+    - '**/*'
+  discard-paths: yes

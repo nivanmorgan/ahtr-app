@@ -14,6 +14,16 @@ resource "aws_iam_role" "codebuild_import_role" {
   assume_role_policy = data.aws_iam_policy_document.codebuild_trust.json
 }
 
+data "aws_iam_policy_document" "codebuild_trust" {
+  statement { 
+    actions = ["sts:AssumeRole"] 
+    principals { 
+      type = "Service" 
+      identifiers = ["codebuild.amazonaws.com"] 
+      } 
+    }
+}
+
 resource "aws_iam_role_policy_attachment" "codebuild_import_dev_access" {
   count      = var.enable_data_import_job ? 1 : 0
   role       = aws_iam_role.codebuild_import_role[0].name
@@ -77,21 +87,38 @@ resource "aws_codebuild_project" "data_import" {
     compute_type = "BUILD_GENERAL1_SMALL"
     image        = "aws/codebuild/standard:7.0"
     type         = "LINUX_CONTAINER"
-    environment_variable = [
-      { name = "AWS_DEFAULT_REGION", value = var.region },
-      { name = "CSV_S3", value = "" },
-      { name = "DB_HOST", value = aws_db_instance.ahtr_postgres.address },
-      { name = "DB_NAME", value = var.db_name },
-      { name = "DB_USER", value = var.db_user },
-      { name = "DB_PASSWORD", value = aws_secretsmanager_secret.db_password.arn, type = "SECRETS_MANAGER" },
-    ]
+        environment_variable { 
+          name = "AWS_DEFAULT_REGION" 
+          value = var.region 
+          }
+    environment_variable { 
+      name = "CSV_S3"            
+      value = "" 
+      }
+    environment_variable { 
+      name = "DB_HOST"           
+      value = aws_db_instance.ahtr_postgres.address 
+      }
+    environment_variable { 
+      name = "DB_NAME"           
+      value = var.db_name 
+      }
+    environment_variable { 
+      name = "DB_USER"           
+      value = var.db_user 
+      }
+    environment_variable {
+      name  = "DB_PASSWORD"
+      value = aws_secretsmanager_secret.db_password.arn
+      type  = "SECRETS_MANAGER"
+    }
   }
 
   source {
     type            = "GITHUB"
-    location        = "https://github.com/${var.repository_id}"
+    location        = "https://github.com/nivanmorgan/ahtr-data-imports.git"
     git_clone_depth = 1
-    buildspec       = file("buildspec-data-import.yml")
+    buildspec       = file("${path.module}/buildspec-data-import.yml")
   }
 
   vpc_config {
