@@ -12,7 +12,8 @@ inputs = {
   region                       = "us-west-2"
   repository_id                = "nivanmorgan/ahtr-app"
   branch                       = "main"
-  code_connection_arn          = "arn:aws:codeconnections:us-west-2:CHANGE-ME-ACCOUNT:connection/CHANGE-ME-CONNECTION"
+  code_connection_arn          = "arn:aws:codeconnections:us-west-2:428847003703:connection/3316d1d6-da19-4bd6-a7a3-b1823ec05b08"
+  enable_backend_pipeline      = true
 
   # Frontend infra only; enable pipeline when ready
   enable_frontend_pipeline     = false
@@ -20,11 +21,11 @@ inputs = {
   frontend_branch              = "main"
   frontend_code_connection_arn = "arn:aws:codeconnections:us-west-2:CHANGE-ME-ACCOUNT:connection/CHANGE-ME-CONNECTION"
 
-  artifact_bucket_name         = "ahtr-prod-artifacts-CHANGE-ME"
-  images_bucket_name           = "ahtr-prod-images-CHANGE-ME"
-  frontend_bucket_name         = "ahtr-prod-frontend-CHANGE-ME"
+  artifact_bucket_name         = "ahtr-prod-artifacts-gp-bucket"
+  images_bucket_name           = "ahtr-prod-images-gp-bucket"
+  frontend_bucket_name         = "ahtr-prod-frontend-gp-bucket"
 
-  ecs_repo_name                = "ahtr-repo"
+  ecs_repo_name                = "ahtr-repo-prod"
   fe_ecr_repo_name             = "ahtr-ui"
 
   # Provide dedicated VPC/subnets for prod
