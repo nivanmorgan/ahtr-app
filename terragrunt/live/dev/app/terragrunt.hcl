@@ -13,6 +13,7 @@ inputs = {
   repository_id               = "nivanmorgan/ahtr-app"
   branch                      = "main"
   code_connection_arn         = "arn:aws:codeconnections:us-west-2:428847003703:connection/3316d1d6-da19-4bd6-a7a3-b1823ec05b08"
+  enable_backend_pipeline     = true
 
   # Frontend infra only; pipeline disabled for now
   enable_frontend_pipeline    = false

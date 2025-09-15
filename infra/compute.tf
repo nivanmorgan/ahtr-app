@@ -88,6 +88,13 @@ resource "aws_ecs_task_definition" "ahtr" {
       secrets = [ { name = "DB_PASSWORD", valueFrom = aws_secretsmanager_secret.db_password.arn } ]
     }
   ])
+
+  # Allow CodePipeline ECS deploy action to update image without Terraform drift
+  lifecycle {
+    ignore_changes = [
+      container_definitions
+    ]
+  }
 }
 
 resource "aws_ecs_service" "ahtr" {

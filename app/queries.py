@@ -1,31 +1,30 @@
-# app/queries.py
+"""Database query helpers."""
 
 from sqlalchemy.orm import Session
 from app.models import ImageView
 
-def get_image_metadata(db: Session, image_id: str):
-    return db.query(ImageView).filter(ImageView.image_id == image_id).first()
 
-def list_images(db: Session, limit: int = 10, offset: int = 0):
-    """Return a list of ImageView records with pagination."""
+def list_image_views(db: Session, limit: int = 10, offset: int = 0):
+    """Return ImageView records with pagination."""
     return (
         db.query(ImageView)
         .offset(offset)
         .limit(limit)
         .all()
     )
-def search_images(
+
+
+def search_image_views(
     db: Session,
     image_id: str | None = None,
-    artwork_id: str | None = None,
-    image_view: str | None = None,
+    view: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
 ):
-    """Query ``ImageView`` records using optional filters."""
+    """Query ImageView records using optional filters with pagination."""
     query = db.query(ImageView)
     if image_id:
         query = query.filter(ImageView.image_id == image_id)
-    if artwork_id:
-        query = query.filter(ImageView.artwork_id == artwork_id)
-    if image_view:
-        query = query.filter(ImageView.image_view == image_view)
-    return query.all()
+    if view:
+        query = query.filter(ImageView.view == view)
+    return query.offset(offset).limit(limit).all()

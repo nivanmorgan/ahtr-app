@@ -55,17 +55,11 @@ def main():
                     session.add(artist)
                     session.flush()
 
-            lat = row.get("latitude")
-            lon = row.get("longitude")
-            lat = float(lat) if lat not in (None, "") else None
-            lon = float(lon) if lon not in (None, "") else None
-
+            # Persist only mapped fields on the current Image model
             img = Image(
                 s3_key=row.get("s3_key"),
                 title=row.get("title"),
                 artist_id=artist.id if artist else None,
-                latitude=lat,
-                longitude=lon,
             )
             session.add(img)
             session.flush()

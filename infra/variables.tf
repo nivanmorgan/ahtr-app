@@ -99,3 +99,25 @@ variable "enable_frontend_cdn" {
   type        = bool
   default     = true
 }
+
+# Backend CI/CD (per-environment)
+variable "enable_backend_pipeline" {
+  description = "Enable backend CodePipeline/CodeBuild for this environment"
+  type        = bool
+  default     = false
+}
+variable "repository_id" {
+  description = "GitHub repo in the form org/repo for backend source"
+  type        = string
+  default     = null
+}
+variable "branch" {
+  description = "Git branch to track for this environment"
+  type        = string
+  default     = null
+}
+variable "code_connection_arn" {
+  description = "AWS CodeStar Connections ARN for GitHub integration"
+  type        = string
+  default     = null
+}
