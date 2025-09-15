@@ -4,7 +4,7 @@ output "alb_dns_name" {
 }
 
 output "cloudfront_domain" {
-  value       = aws_cloudfront_distribution.frontend.domain_name
+  value       = var.enable_frontend_cdn ? aws_cloudfront_distribution.frontend[0].domain_name : null
   description = "CloudFront distribution domain for the frontend"
 }
 

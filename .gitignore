@@ -167,4 +167,4 @@ cython_debug/
 .terraform
 .terraform.lock.hcl
 *.bak
-.DS_Store
+.DS_Storez

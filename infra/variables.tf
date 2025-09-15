@@ -94,3 +94,8 @@ variable "enable_frontend_pipeline" {
     type = bool 
     default = false 
     }
+variable "enable_frontend_cdn" {
+  description = "Enable CloudFront distribution and OAC for frontend"
+  type        = bool
+  default     = true
+}

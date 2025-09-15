@@ -1,5 +1,6 @@
 resource "aws_cloudfront_origin_access_control" "oac" {
-  name                              = "${local.name_prefix}-frontend-oac"
+  count                            = var.enable_frontend_cdn ? 1 : 0
+name                              = "${local.name_prefix}-frontend-oac"
   description                       = "OAC for S3 frontend bucket"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -7,13 +8,14 @@ resource "aws_cloudfront_origin_access_control" "oac" {
 }
 
 resource "aws_cloudfront_distribution" "frontend" {
-  enabled             = true
+  count               = var.enable_frontend_cdn ? 1 : 0
+enabled             = true
   default_root_object = "index.html"
 
   origin {
     domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
     origin_id                = "frontend-s3"
-    origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
+    origin_access_control_id = aws_cloudfront_origin_access_control.oac[0].id
   }
 
   default_cache_behavior {
