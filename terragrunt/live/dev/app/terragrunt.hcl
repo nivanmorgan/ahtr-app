@@ -25,7 +25,6 @@ inputs = {
   images_bucket_name          = "ahtr-dev-images-gp-bucket"
   frontend_bucket_name        = "ahtr-dev-frontend-gp-bucket"
 
-  ecs_repo_name               = "ahtr-repo"
   fe_ecr_repo_name            = "ahtr-ui"
 
   # Networking: use default VPC if unset
@@ -42,6 +41,11 @@ inputs = {
   db_user                     = "ahtr_user"
   db_password                 = "CHANGE-ME"  # set a real secret locally, not committed
 
-  # Container image to bootstrap service; pipeline will update
+  # Align ECR repo with ECS image name so CodeBuild/CodePipeline and ECS use the same backend repo
+  ecs_repo_name               = "ahtr-be"
+  # Container image to bootstrap service; pipeline will update image on deploy
   container_image             = "428847003703.dkr.ecr.us-west-2.amazonaws.com/ahtr-be:bootstrap"
+
+  # While pipeline/image is being set up, keep ECS scaled to 0
+  desired_count               = 0
 }

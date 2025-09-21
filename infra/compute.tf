@@ -101,7 +101,7 @@ resource "aws_ecs_service" "ahtr" {
   name            = "${local.name_prefix}-service"
   cluster         = aws_ecs_cluster.ahtr.id
   task_definition = aws_ecs_task_definition.ahtr.arn
-  desired_count   = 1
+  desired_count   = var.desired_count
   launch_type     = "FARGATE"
   network_configuration { 
     subnets = local.subnet_ids 

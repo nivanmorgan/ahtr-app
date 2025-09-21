@@ -1,0 +1,22 @@
+# Example mapping for xlsx_to_import_csv.py
+# Adjust sheet names and column headers to match your workbook.
+
+sheets:
+  - name: Images
+    key: s3_key
+    columns:
+      s3_key: S3 Key
+      title: Title
+      artist: Artist
+
+  - name: Geo
+    key: s3_key
+    columns:
+      latitude: Latitude
+      longitude: Longitude
+
+  - name: Views
+    key: s3_key
+    columns:
+      views: Views
+

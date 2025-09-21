@@ -25,12 +25,17 @@ inputs = {
   images_bucket_name           = "ahtr-prod-images-gp-bucket"
   frontend_bucket_name         = "ahtr-prod-frontend-gp-bucket"
 
-  ecs_repo_name                = "ahtr-repo-prod"
+  ecs_repo_name                = "ahtr-be"
   fe_ecr_repo_name             = "ahtr-ui"
 
-  # Provide dedicated VPC/subnets for prod
-  # vpc_id                      = "vpc-xxxx"
-  # subnet_ids                  = ["subnet-a", "subnet-b", "subnet-c"]
+  # Pin to dedicated VPC/subnets for prod (replace with prod-specific values if different)
+  vpc_id                      = "vpc-0b20bd3efed7d6b83"
+  subnet_ids                  = [
+    "subnet-00f70b8da96121bcb",
+    "subnet-055a293f918608598",
+    "subnet-08f684a9012611f93",
+    "subnet-0fcc1383801e586a8"
+  ]
 
   # DB credentials (prod)
   db_name                      = "ahtr"
@@ -43,4 +48,5 @@ inputs = {
   # hosted_zone_id             = "Z..."
 
   container_image              = "428847003703.dkr.ecr.us-west-2.amazonaws.com/ahtr-be:latest"
+  enable_manual_approval       = true
 }

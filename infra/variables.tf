@@ -50,9 +50,9 @@ variable "container_image" {
     }
 
 variable "ecs_repo_name" { 
-    description = "ECR repository name" 
+    description = "ECR repository name (backend)" 
     type = string 
-    default = "ahtr-repo" 
+    default = "ahtr-be" 
     }
 variable "fe_ecr_repo_name" { 
     description = "Frontend ECR repo name" 
@@ -100,6 +100,13 @@ variable "enable_frontend_cdn" {
   default     = true
 }
 
+# ECS service desired task count
+variable "desired_count" {
+  description = "ECS service desired task count"
+  type        = number
+  default     = 1
+}
+
 # Backend CI/CD (per-environment)
 variable "enable_backend_pipeline" {
   description = "Enable backend CodePipeline/CodeBuild for this environment"
@@ -110,6 +117,11 @@ variable "repository_id" {
   description = "GitHub repo in the form org/repo for backend source"
   type        = string
   default     = null
+}
+variable "enable_manual_approval" {
+  description = "Insert a manual approval stage before deploy (recommended for prod)"
+  type        = bool
+  default     = false
 }
 variable "branch" {
   description = "Git branch to track for this environment"

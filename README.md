@@ -11,6 +11,9 @@ AHTR interactive map !
 ## Quick Links
 - Dev process log: see `NEXT_STEPS.md` for dated actions and decisions.
 - Contributor guide: see `AGENTS.md` for structure, style, and commands.
+- API endpoints: see `docs/endpoints.md` for routes and examples.
+- Dev runbook: see `docs/dev-runbook.md` to bring the app up in AWS.
+- Prod runbook: see `docs/prod-runbook.md` to bring the prod stack up.
 
 ## Local Development
 - Install deps: `pip install -r requirements.txt`

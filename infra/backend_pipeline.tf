@@ -46,10 +46,17 @@ data "aws_iam_policy_document" "cb_be_policy" {
       "${aws_s3_bucket.artifacts.arn}/*"
     ]
   }
+  # Split ECR access: auth token requires resource "*"
+  statement {
+    sid     = "ECRAuthToken"
+    actions = [
+      "ecr:GetAuthorizationToken"
+    ]
+    resources = ["*"]
+  }
   statement {
     sid     = "ECRPush"
     actions = [
-      "ecr:GetAuthorizationToken",
       "ecr:BatchCheckLayerAvailability",
       "ecr:CompleteLayerUpload",
       "ecr:InitiateLayerUpload",
@@ -81,13 +88,23 @@ resource "aws_codebuild_project" "backend" {
   source    { type = "CODEPIPELINE" }
 
   environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/standard:7.0"
-    type                        = "LINUX_CONTAINER"
-    privileged_mode             = true
-    environment_variable { name = "AWS_DEFAULT_REGION" value = var.region }
-    environment_variable { name = "ECR_REPO_URI" value = aws_ecr_repository.ahtr.repository_url }
-    environment_variable { name = "CONTAINER_NAME" value = "ahtr" }
+    compute_type    = "BUILD_GENERAL1_SMALL"
+    image           = "aws/codebuild/standard:7.0"
+    type            = "LINUX_CONTAINER"
+    privileged_mode = true
+
+    environment_variable {
+      name  = "AWS_DEFAULT_REGION"
+      value = var.region
+    }
+    environment_variable {
+      name  = "ECR_REPO_URI"
+      value = aws_ecr_repository.ahtr.repository_url
+    }
+    environment_variable {
+      name  = "CONTAINER_NAME"
+      value = "ahtr"
+    }
   }
 }
 
@@ -211,6 +228,26 @@ resource "aws_codepipeline" "backend" {
     }
   }
 
+  # Optional manual approval before deploy (e.g., for prod)
+  dynamic "stage" {
+    for_each = var.enable_manual_approval ? [1] : []
+    content {
+      name = "Approve"
+      action {
+        name             = "ManualApproval"
+        category         = "Approval"
+        owner            = "AWS"
+        provider         = "Manual"
+        version          = "1"
+        input_artifacts  = []
+        output_artifacts = []
+        configuration = {
+          CustomData = "Approve production deploy"
+        }
+      }
+    }
+  }
+
   stage {
     name = "Deploy"
     action {
@@ -238,4 +275,3 @@ output "backend_codebuild_project" {
   value       = local.be_pipeline_enabled ? aws_codebuild_project.backend[0].name : null
   description = "Backend CodeBuild project (if enabled)"
 }
-

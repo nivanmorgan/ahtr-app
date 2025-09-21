@@ -1,6 +1,7 @@
 # app/main.py
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
@@ -18,6 +19,17 @@ app = FastAPI(
     title="AHTR Map Backend Service",
     description="Serves map images and metadata from S3 and PostgreSQL",
     version="0.1.0"
+)
+
+# Enable CORS (allow all in dev; set CORS_ORIGINS env for specific origins)
+origins_env = os.getenv("CORS_ORIGINS", "*")
+allow_origins = [o.strip() for o in origins_env.split(",")] if origins_env != "*" else ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.on_event("startup")
@@ -67,4 +79,3 @@ def health_check():
         "status": "healthy" if overall else "unhealthy"
     }
     return {"status": "healthy"}
-
