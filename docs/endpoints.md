@@ -21,6 +21,11 @@ Endpoints
 - GET `/api/image?image_key=<s3-key>` : Redirect to a pre‑signed S3 URL for a specific object
   - 302 redirect to S3 pre‑signed URL or 404 if not found.
 
+- GET `/api/db-stats` : Development DB stats and sample rows
+  - Query: `limit` (0..50, default 5) for sample size
+  - 200: `{ "counts": {"artists": 0, "images": 0, "image_views": 0}, "view_distribution": [{"view":"front","count":10}], "sample": [{"title":"..","view":"front"}] }`
+  - Intended for dev troubleshooting only; consider disabling in prod.
+
 Notes for FE
 - Use `/api/images` to paginate through available image views; follow the `url` for direct display.
 - Handle `url=null` gracefully (no S3 key known).
@@ -31,3 +36,11 @@ Examples
 - `curl http://<ALB>/health`
 - `curl "http://<ALB>/api/images?limit=20&view=front"`
 - `curl -i "http://<ALB>/api/image?image_key=folder/file.jpg"`
+
+our dev base_url is
+
+http://ahtr-dev-alb-819416922.us-west-2.elb.amazonaws.com/
+
+so example endpoint is
+
+http://ahtr-dev-alb-819416922.us-west-2.elb.amazonaws.com/api/images?limit=20&view=front

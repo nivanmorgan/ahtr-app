@@ -1,7 +1,10 @@
 # Dev Runbook: Bring Up AHTR Backend
 
 Prereqs
-- AWS credentials configured (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION=us-west-2`)
+- AWS CLI configured and profile set
+  - `export AWS_PROFILE=ahtr-dev`
+  - `export AWS_REGION=us-west-2`
+  - Verify: `aws sts get-caller-identity`
 - `terragrunt`, `terraform`, `awscli`, `docker` installed
 
 1) Apply dev infra (ECR, ECS, RDS, S3, CodePipeline/CodeBuild)
@@ -30,6 +33,27 @@ Prereqs
 - Get the ALB DNS: `terragrunt output -raw alb_dns_name`
 - `curl http://<ALB>/health` should show `{ "database": true, "s3": true, "status": "healthy" }`
 - See `docs/endpoints.md` for API and examples.
+
+## Make Cheatsheet
+- Build + push backend image: `make docker-build-push`
+- Force service to redeploy: `make deploy-force`
+- Scale service up/down: `make scale-ecs DESIRED=1|0`
+- Trigger backend pipeline: `make pipeline-run`
+- Upload images: `make s3-sync-images DIR=./path`
+- Upload CSV for import: `make upload-csv CSV=./out.csv`
+- Run default import: `make import-csv-default`
+- More: see `docs/make-commands.md` for all targets and variables.
+
+## Data Locations (Dev)
+- Images bucket: `terragrunt output -raw images_bucket` (example: `ahtr-dev-images-gp-bucket`)
+- Conventions:
+  - Images: `s3://<images_bucket>/images/...`
+  - Import CSVs: `s3://<images_bucket>/imports/transcarta.csv` (default)
+- Helpers:
+  - Upload images under prefix: `make s3-sync-images DIR=./path/to/images`
+  - Upload a CSV: `make upload-csv CSV=./out.csv`
+  - Run import with default path: `make import-csv-default` (uses `CSV_FILE=transcarta.csv` by default)
+  - Override the CSV file name: `CSV_FILE=mydata.csv make import-csv-default`
 
 Notes
 - CORS is enabled; set `CORS_ORIGINS` env for stricter non‑dev origins.

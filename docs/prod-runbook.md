@@ -55,3 +55,12 @@ Notes
 - Images bucket: `terragrunt output -raw images_bucket`
 - CORS is enabled; set `CORS_ORIGINS` env to your FE origins for stricter behavior.
 - For HTTPS + DNS, add ACM and Route53 inputs in the prod terragrunt file and extend ALB to terminate TLS (future enhancement).
+
+## Make Cheatsheet
+- Build + push backend image: `make docker-build-push`
+- Force service to redeploy: `make deploy-force`
+- Scale service up/down: `make scale-ecs DESIRED=1|0`
+- Trigger backend pipeline: `make pipeline-run`
+- Upload images: `make s3-sync-images DIR=./path`
+- Upload CSV for import: `make upload-csv CSV=./out.csv`
+- Run default import: `make import-csv-default`

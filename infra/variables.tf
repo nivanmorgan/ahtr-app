@@ -28,6 +28,13 @@ variable "db_password" {
     sensitive = true 
     }
 
+# Optional: additional CIDR blocks allowed to access RDS (dev convenience)
+variable "db_additional_cidrs" {
+  description = "List of additional CIDR blocks allowed inbound to RDS on 5432 (use for dev testing)"
+  type        = list(string)
+  default     = []
+}
+
 variable "vpc_id" { 
     description = "VPC id (optional)" 
     type = string 

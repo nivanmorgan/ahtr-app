@@ -155,8 +155,11 @@ data "aws_iam_policy_document" "cp_be_policy" {
   statement {
     sid     = "ECSDeploy"
     actions = [
+      "ecs:DescribeClusters",
       "ecs:DescribeServices",
       "ecs:DescribeTaskDefinition",
+      "ecs:DescribeTaskSets",
+      "ecs:ListTaskDefinitions",
       "ecs:RegisterTaskDefinition",
       "ecs:UpdateService"
     ]
@@ -169,6 +172,17 @@ data "aws_iam_policy_document" "cp_be_policy" {
       aws_iam_role.ecs_task_execution_role.arn,
       aws_iam_role.ecs_task_role.arn
     ]
+  }
+  # Fallback: allow PassRole with condition restricted to ECS tasks
+  statement {
+    sid     = "PassRoleEcsTasksConditional"
+    actions = ["iam:PassRole"]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "iam:PassedToService"
+      values   = ["ecs-tasks.amazonaws.com"]
+    }
   }
 }
 

@@ -6,6 +6,11 @@ terraform {
   source = "../../../../infra"
 }
 
+locals {
+  # Detect current public IP at apply time for convenient dev DB access
+  my_ip = chomp(run_cmd("bash", "-lc", "curl -s https://checkip.amazonaws.com"))
+}
+
 inputs = {
   project                    = "ahtr"
   environment                = "dev"
@@ -39,7 +44,9 @@ inputs = {
   # DB credentials (dev)
   db_name                     = "ahtr"
   db_user                     = "ahtr_user"
-  db_password                 = "CHANGE-ME"  # set a real secret locally, not committed
+  db_password                 = "2VXn0bhGdcnseM2JQB50" # temporary dev secret; rotate later
+  # Allowlist current IP for dev DB access automatically. Remove when done.
+  db_additional_cidrs         = [format("%s/32", local.my_ip)]
 
   # Align ECR repo with ECS image name so CodeBuild/CodePipeline and ECS use the same backend repo
   ecs_repo_name               = "ahtr-be"

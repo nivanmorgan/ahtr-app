@@ -91,10 +91,11 @@ resource "aws_codebuild_project" "data_import" {
           name = "AWS_DEFAULT_REGION" 
           value = var.region 
           }
-    environment_variable { 
-      name = "CSV_S3"            
-      value = "" 
-      }
+    # Default CSV path for imports (can be overridden at build time)
+    environment_variable {
+      name  = "CSV_S3"
+      value = "s3://${var.images_bucket_name}/imports/transcarta.csv"
+    }
     environment_variable { 
       name = "DB_HOST"           
       value = aws_db_instance.ahtr_postgres.address 
@@ -116,7 +117,8 @@ resource "aws_codebuild_project" "data_import" {
 
   source {
     type            = "GITHUB"
-    location        = "https://github.com/nivanmorgan/ahtr-data-imports.git"
+    # Use the same repository as the backend so buildspec can access scripts/import_csv.py and requirements.txt
+    location        = "https://github.com/${var.repository_id}.git"
     git_clone_depth = 1
     buildspec       = file("${path.module}/buildspec-data-import.yml")
   }

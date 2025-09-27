@@ -1,0 +1,17 @@
+{
+  "name": "ahtr-dev-be-manual",
+  "serviceRole": "arn:aws:iam::428847003703:role/ahtr-dev-cb-be-role",
+  "source": { "type": "S3", "location": "ahtr-dev-artifacts-gp-bucket/manual-src/ahtr-app-20250921113212.zip" },
+  "artifacts": { "type": "NO_ARTIFACTS" },
+  "environment": {
+    "type": "LINUX_CONTAINER",
+    "image": "aws/codebuild/standard:7.0",
+    "computeType": "BUILD_GENERAL1_SMALL",
+    "privilegedMode": true,
+    "environmentVariables": [
+      {"name":"AWS_DEFAULT_REGION","value":"us-west-2"},
+      {"name":"ECR_REPO_URI","value":"428847003703.dkr.ecr.us-west-2.amazonaws.com/ahtr-be"},
+      {"name":"CONTAINER_NAME","value":"ahtr"}
+    ]
+  }
+}

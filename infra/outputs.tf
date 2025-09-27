@@ -43,6 +43,11 @@ output "ecs_sg_id" {
   description = "Security group ID for ECS tasks"
 }
 
+output "db_sg_id" {
+  value       = aws_security_group.db_sg.id
+  description = "Security group ID for the RDS instance"
+}
+
 output "subnet_ids" {
   value       = local.subnet_ids
   description = "List of subnet IDs used for ECS/RDS"

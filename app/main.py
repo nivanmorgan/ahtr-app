@@ -6,6 +6,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 from app.image_router import router as image_router
+from app.admin_router import router as admin_router
 from app.db import init_db, engine
 import logging
 import boto3
@@ -32,14 +33,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Expose Prometheus metrics
+Instrumentator().instrument(app).expose(app)
+
 @app.on_event("startup")
 async def startup_event():
-    init_db()
-    Instrumentator().instrument(app).expose(app)
+    try:
+        init_db()
+    except Exception as exc:
+        # Avoid crashing container if DB is not reachable on startup
+        logger.exception("Database init failed at startup: %s", exc)
     logger.info("Application startup complete")
     FastAPICache.init(InMemoryBackend())
 
 app.include_router(image_router, prefix="/api")
+app.include_router(admin_router, prefix="/api")
 
 @app.get("/")
 def read_root():

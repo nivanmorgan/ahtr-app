@@ -20,6 +20,40 @@ AHTR interactive map !
 - Run API: `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
 - Tests: `pytest -q`
 
+## Make Quickstart
+- Build and push image: `make docker-build-push` (tags with current `GIT_SHA` and `latest`)
+- Force ECS to pull new image: `make deploy-force`
+- Scale service: `make scale-ecs DESIRED=1`
+- Start backend pipeline: `make pipeline-run`
+- Full target reference: see `docs/make-commands.md`.
+
+## Prod Quickstart
+- Set AWS context: `export AWS_PROFILE=<prod-profile>` and `export AWS_REGION=us-west-2`
+- Apply infra: `cd terragrunt/live/prod/app && terragrunt apply -auto-approve`
+- Deploy app:
+  - Option A (recommended): `make pipeline-run` or push to the tracked branch.
+  - Option B (manual): `make docker-build-push && make deploy-force`
+- Scale service: `make scale-ecs DESIRED=1`
+- Get ALB: `terragrunt output -raw alb_dns_name`
+- Full guide: see `docs/prod-runbook.md`.
+
+## AWS CLI Setup
+- Set your profile for all Makefile commands:
+  - `export AWS_PROFILE=ahtr-dev`
+  - `export AWS_REGION=us-west-2`
+  - Verify credentials: `aws sts get-caller-identity`
+- The Makefile automatically uses `AWS_PROFILE` for AWS CLI calls.
+
+## Data Locations
+- Images bucket: `terraform -chdir=infra output -raw images_bucket`
+- Conventions:
+  - Images: `s3://<images_bucket>/images/...`
+  - Import CSVs: `s3://<images_bucket>/imports/transcarta.csv` (default)
+- Helpers:
+  - Upload images: `make s3-sync-images DIR=./path/to/images`
+  - Upload CSV: `make upload-csv CSV=./out.csv`
+  - Import default CSV: `make import-csv-default` (uses `CSV_FILE=transcarta.csv`)
+
 ## Infrastructure (Dev)
 - Terraform: `cd infra && terraform init && terraform apply`
 - Terragrunt (recommended for envs): `cd terragrunt/live/dev/app && terragrunt apply`
@@ -30,6 +64,7 @@ AHTR interactive map !
 - Import CSV to RDS:
   - Via ECS task: `make import-csv CSV_S3=s3://<bucket>/seed.csv DB_USER=... DB_PASSWORD=...`
   - Via CodeBuild: `make import-csv-cb CSV_S3=s3://<bucket>/seed.csv`
+  - Defaults: `make import-csv-default` uses `s3://$(IMAGES_BUCKET)/imports/transcarta.csv`
 
 ## Converting Excel to Importable CSV
 - If your data is in Excel with multiple sheets, use the helper:

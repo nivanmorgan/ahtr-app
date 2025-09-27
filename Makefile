@@ -15,6 +15,15 @@ GIT_SHA             ?= $(shell git rev-parse --short=7 HEAD 2>/dev/null)
 PIPELINE            ?= $(shell terraform -chdir=infra output -raw backend_pipeline_name 2>/dev/null)
 IMAGES_BUCKET       ?= $(shell terraform -chdir=infra output -raw images_bucket 2>/dev/null)
 
+# S3 path conventions
+CSV_PREFIX          ?= imports
+IMAGES_PREFIX       ?= images
+CSV_FILE            ?= transcarta.csv
+
+# Optional AWS profile for CLI commands (export AWS_PROFILE=ahtr-dev)
+AWS_PROFILE        ?=
+AWS                := aws $(if $(AWS_PROFILE),--profile $(AWS_PROFILE))
+
 # DB details (override as needed)
 DB_NAME             ?= ahtr
 DB_USER             ?= ahtr_user
@@ -44,6 +53,11 @@ help:
 	@echo "  scale-ecs        - update ECS desired count (set DESIRED=0/1)"
 	@echo "  pipeline-run     - start backend CodePipeline execution"
 	@echo "  s3-sync          - sync a local dir to images bucket (set DIR=path)"
+	@echo "  s3-sync-images   - sync a local dir under s3://$(IMAGES_BUCKET)/$(IMAGES_PREFIX)/"
+	@echo "  upload-csv       - upload CSV to s3://$(IMAGES_BUCKET)/$(CSV_PREFIX)/ (set CSV=path/to/file.csv)"
+	@echo "  import-csv-default - run import using s3://$(IMAGES_BUCKET)/$(CSV_PREFIX)/$(CSV_FILE)"
+	@echo "  db-stats         - run ECS task to print DB table counts"
+	@echo "\nUsing AWS profile: $(if $(AWS_PROFILE),$(AWS_PROFILE),<default>) and region: $(AWS_REGION)"
 
 infra-init:
 	terraform -chdir=infra init
@@ -62,19 +76,19 @@ import-csv:
 	@if [ -z "$(CLUSTER)" ] || [ -z "$(TASK_DEF)" ] || [ -z "$(SUBNETS)" ] || [ -z "$(ECS_SG)" ]; then \
 		echo "Missing cluster/task/subnets/sg. Ensure terraform outputs exist or export vars."; exit 1; fi
 	@TMP=$$(mktemp); \
-	cat > $$TMP <<EOF
-{
-  "containerOverrides": [
-    {
-      "name": "$(CONTAINER_NAME)",
-      "command": [
-        "python","scripts/import_csv.py","--csv","$(CSV_S3)","--db","$(DB_URL)"
-      ]
-    }
-  ]
-}
-EOF
-	aws ecs run-task \
+	cat > $$TMP <<-EOF
+	{
+	  "containerOverrides": [
+	    {
+	      "name": "$(CONTAINER_NAME)",
+	      "command": [
+	        "python","scripts/import_csv.py","--csv","$(CSV_S3)","--db","$(DB_URL)"
+	      ]
+	    }
+	  ]
+	}
+	EOF
+	$(AWS) ecs run-task \
 		--region $(AWS_REGION) \
 		--cluster $(CLUSTER) \
 		--launch-type FARGATE \
@@ -87,14 +101,14 @@ import-csv-cb:
 	@if [ -z "$(CSV_S3)" ]; then echo "Set CSV_S3=s3://bucket/key.csv"; exit 1; fi
 	CB_NAME=$${CB_NAME:-$$(terraform -chdir=infra output -raw codebuild_data_import_name 2>/dev/null)}; \
 	if [ -z "$$CB_NAME" ]; then echo "CodeBuild data import project not found. Enable in Terraform."; exit 1; fi; \
-	aws codebuild start-build --region $(AWS_REGION) --project-name "$$CB_NAME" \
+	$(AWS) codebuild start-build --region $(AWS_REGION) --project-name "$$CB_NAME" \
 		--environment-variables-override name=CSV_S3,type=PLAINTEXT,value=$(CSV_S3)
 
 .PHONY: ecr-login docker-build docker-push docker-build-push seed-bootstrap deploy-force scale-ecs
 
 ecr-login:
 	@if [ -z "$(ECR_REPO)" ]; then echo "ECR repo URL not found. Run terraform in infra/ first."; exit 1; fi
-	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(REGISTRY)
+	$(AWS) ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(REGISTRY)
 
 docker-build:
 	@if [ -z "$(ECR_REPO)" ]; then echo "ECR repo URL not found. Run terraform in infra/ first."; exit 1; fi
@@ -115,18 +129,61 @@ seed-bootstrap: ecr-login
 
 deploy-force:
 	@if [ -z "$(CLUSTER)" ] || [ -z "$(SERVICE)" ]; then echo "Missing cluster/service. Ensure terraform outputs exist or export vars."; exit 1; fi
-	aws ecs update-service --region $(AWS_REGION) --cluster $(CLUSTER) --service $(SERVICE) --force-new-deployment >/dev/null && echo "Deployment forced for $(SERVICE)"
+	$(AWS) ecs update-service --region $(AWS_REGION) --cluster $(CLUSTER) --service $(SERVICE) --force-new-deployment >/dev/null && echo "Deployment forced for $(SERVICE)"
 
 scale-ecs:
 	@if [ -z "$(CLUSTER)" ] || [ -z "$(SERVICE)" ]; then echo "Missing cluster/service. Ensure terraform outputs exist or export vars."; exit 1; fi
 	@if [ -z "$(DESIRED)" ]; then echo "Set DESIRED=0 or DESIRED=1"; exit 1; fi
-	aws ecs update-service --region $(AWS_REGION) --cluster $(CLUSTER) --service $(SERVICE) --desired-count $(DESIRED)
+	$(AWS) ecs update-service --region $(AWS_REGION) --cluster $(CLUSTER) --service $(SERVICE) --desired-count $(DESIRED)
 
 pipeline-run:
 	@if [ -z "$(PIPELINE)" ]; then echo "Backend pipeline not found. Ensure it's enabled and terraform outputs exist."; exit 1; fi
-	aws codepipeline start-pipeline-execution --name "$(PIPELINE)" --region $(AWS_REGION)
+	$(AWS) codepipeline start-pipeline-execution --name "$(PIPELINE)" --region $(AWS_REGION)
 
 s3-sync:
 	@if [ -z "$(DIR)" ]; then echo "Set DIR=path/to/images"; exit 1; fi
 	@if [ -z "$(IMAGES_BUCKET)" ]; then echo "Images bucket not found. Run terraform in infra/ first."; exit 1; fi
-	aws s3 sync "$(DIR)" "s3://$(IMAGES_BUCKET)/" --region $(AWS_REGION)
+	$(AWS) s3 sync "$(DIR)" "s3://$(IMAGES_BUCKET)/" --region $(AWS_REGION)
+
+.PHONY: s3-sync-images upload-csv import-csv-default
+
+s3-sync-images:
+	@if [ -z "$(DIR)" ]; then echo "Set DIR=path/to/images"; exit 1; fi
+	@if [ -z "$(IMAGES_BUCKET)" ]; then echo "Images bucket not found. Run terraform in infra/ first."; exit 1; fi
+	$(AWS) s3 sync "$(DIR)" "s3://$(IMAGES_BUCKET)/$(IMAGES_PREFIX)/" --region $(AWS_REGION)
+
+upload-csv:
+	@if [ -z "$(CSV)" ]; then echo "Set CSV=path/to/file.csv"; exit 1; fi
+	@if [ -z "$(IMAGES_BUCKET)" ]; then echo "Images bucket not found. Run terraform in infra/ first."; exit 1; fi
+	$(AWS) s3 cp "$(CSV)" "s3://$(IMAGES_BUCKET)/$(CSV_PREFIX)/$$(basename \"$(CSV)\")" --region $(AWS_REGION)
+
+import-csv-default:
+	@if [ -z "$(IMAGES_BUCKET)" ]; then echo "Images bucket not found. Run terraform in infra/ first."; exit 1; fi
+	$(MAKE) import-csv-cb CSV_S3=s3://$(IMAGES_BUCKET)/$(CSV_PREFIX)/$(CSV_FILE)
+
+.PHONY: db-stats
+db-stats:
+	@if [ -z "$(CLUSTER)" ] || [ -z "$(TASK_DEF)" ] || [ -z "$(SUBNETS)" ] || [ -z "$(ECS_SG)" ]; then \
+		echo "Missing cluster/task/subnets/sg. Ensure terraform outputs exist or export vars."; exit 1; fi
+	@TMP=$$(mktemp); \
+	cat > $$TMP <<-EOF
+	{
+	  "containerOverrides": [
+	    {
+	      "name": "$(CONTAINER_NAME)",
+	      "command": [
+	        "python","-c",
+	        "from sqlalchemy import create_engine,text;import os;u=os.getenv('POSTGRES_URL') or f\"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:5432/{os.getenv('DB_NAME')}\";e=create_engine(u);from sqlalchemy.exc import SQLAlchemyError;\ntry:\n  with e.connect() as c:\n    for t in ['artists','images','image_views']:\n      cnt=c.execute(text(f'SELECT count(*) FROM {t}')).scalar();print(t,cnt)\n    rows=c.execute(text('SELECT i.title, iv.view FROM images i JOIN image_views iv ON iv.image_id=i.id LIMIT 5')).fetchall();print('sample',rows)\nexcept SQLAlchemyError as ex:\n  import sys; print('DB error',ex); sys.exit(1)"
+	      ]
+	    }
+	  ]
+	}
+	EOF
+	$(AWS) ecs run-task \
+		--region $(AWS_REGION) \
+		--cluster $(CLUSTER) \
+		--launch-type FARGATE \
+		--task-definition $(TASK_DEF) \
+		--network-configuration awsvpcConfiguration="subnets=[$(SUBNETS)],securityGroups=[$(ECS_SG)],assignPublicIp=ENABLED" \
+		--overrides file://$$TMP ; \
+	rc=$$?; rm -f $$TMP; exit $$rc

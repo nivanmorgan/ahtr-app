@@ -46,6 +46,18 @@ resource "aws_security_group" "db_sg" {
     }
   }
 
+  # Optional: allow developer CIDRs for direct psql access in dev
+  dynamic "ingress" {
+    for_each = var.db_additional_cidrs
+    content {
+      from_port   = 5432
+      to_port     = 5432
+      protocol    = "tcp"
+      cidr_blocks = [ingress.value]
+      description = "Dev access"
+    }
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
