@@ -32,6 +32,11 @@ app.include_router(image_router, prefix="/api")
 @app.get("/")
 def read_root():
     return {"message": "AHTR Map Service Operational"}
+
+@app.get("/jayz")
+def read_root():
+    return {"tyrannosaurus": "rex"}
+
 @app.get("/health")
 def health_check():
     db_ok = True
