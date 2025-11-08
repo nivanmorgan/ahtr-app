@@ -8,3 +8,5 @@ psycopg2-binary
 gunicorn
 prometheus-fastapi-instrumentator
 fastapi-cache2
+geopy
+certifi

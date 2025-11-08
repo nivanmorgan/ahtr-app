@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, ForeignKey
+from sqlalchemy import Column, String, Text, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
@@ -19,6 +19,11 @@ class Image(Base):
     s3_key = Column(String, unique=True, index=True)
     title = Column(Text)
     artist_id = Column(UUID(as_uuid=True), ForeignKey("artists.id"))
+    
+    # Geographic location fields for map display
+    latitude = Column(Numeric(10, 8), nullable=True)
+    longitude = Column(Numeric(11, 8), nullable=True)
+    location_name = Column(String(255), nullable=True)
 
     artist = relationship("Artist", back_populates="images")
     views = relationship("ImageView", back_populates="image")

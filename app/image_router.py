@@ -66,6 +66,9 @@ def list_images(
             "image_id": str(r.image_id) if r.image_id else None,
             "view": r.view,
             "url": url,
+            "latitude": float(r.image.latitude) if r.image and r.image.latitude else None,
+            "longitude": float(r.image.longitude) if r.image and r.image.longitude else None,
+            "location_name": r.image.location_name if r.image and hasattr(r.image, 'location_name') else None,
         })
 
     return results
