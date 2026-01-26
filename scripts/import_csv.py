@@ -56,10 +56,17 @@ def main():
                     session.flush()
 
             # Persist only mapped fields on the current Image model
+            latitude = row.get("latitude")
+            longitude = row.get("longitude")
+            
             img = Image(
                 s3_key=row.get("s3_key"),
                 title=row.get("title"),
                 artist_id=artist.id if artist else None,
+                latitude=float(latitude) if latitude and latitude.strip() else None,
+                longitude=float(longitude) if longitude and longitude.strip() else None,
+                location_name=row.get("location_name"),
+                timeframe=row.get("timeframe"),
             )
             session.add(img)
             session.flush()

@@ -40,11 +40,23 @@ def list_images(
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     image_id: str | None = Query(None, description="Filter by image UUID"),
     view: str | None = Query(None, description="Filter by view (e.g. 'front', 'back')"),
+    artist: str | None = Query(None, description="Filter by artist name"),
+    location: str | None = Query(None, description="Filter by location name"),
+    timeframe: str | None = Query(None, description="Filter by timeframe"),
     db: Session = Depends(get_db),
 ):
     """Return ImageView rows; include a pre-signed S3 URL when possible."""
-    if image_id or view:
-        rows = search_image_views(db, image_id=image_id, view=view, limit=limit, offset=offset)
+    if image_id or view or artist or location or timeframe:
+        rows = search_image_views(
+            db, 
+            image_id=image_id, 
+            view=view, 
+            artist=artist, 
+            location=location, 
+            timeframe=timeframe, 
+            limit=limit, 
+            offset=offset
+        )
     else:
         rows = list_image_views(db, limit=limit, offset=offset)
 

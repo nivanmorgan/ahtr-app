@@ -187,3 +187,28 @@ db-stats:
 		--network-configuration awsvpcConfiguration="subnets=[$(SUBNETS)],securityGroups=[$(ECS_SG)],assignPublicIp=ENABLED" \
 		--overrides file://$$TMP ; \
 	rc=$$?; rm -f $$TMP; exit $$rc
+
+migrate-db:
+	@if [ -z "$(CLUSTER)" ] || [ -z "$(TASK_DEF)" ] || [ -z "$(SUBNETS)" ] || [ -z "$(ECS_SG)" ]; then \
+		echo "Missing cluster/task/subnets/sg. Ensure terraform outputs exist or export vars."; exit 1; fi
+	@TMP=$$(mktemp); \
+	cat > $$TMP <<-EOF
+	{
+	  "containerOverrides": [
+	    {
+	      "name": "$(CONTAINER_NAME)",
+	      "command": [
+	        "alembic", "upgrade", "head"
+	      ]
+	    }
+	  ]
+	}
+	EOF
+	$(AWS) ecs run-task \
+		--region $(AWS_REGION) \
+		--cluster $(CLUSTER) \
+		--launch-type FARGATE \
+		--task-definition $(TASK_DEF) \
+		--network-configuration awsvpcConfiguration="subnets=[$(SUBNETS)],securityGroups=[$(ECS_SG)],assignPublicIp=ENABLED" \
+		--overrides file://$$TMP ; \
+	rc=$$?; rm -f $$TMP; exit $$rc

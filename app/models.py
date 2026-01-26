@@ -24,6 +24,7 @@ class Image(Base):
     latitude = Column(Numeric(10, 8), nullable=True)
     longitude = Column(Numeric(11, 8), nullable=True)
     location_name = Column(String(255), nullable=True)
+    timeframe = Column(String, nullable=True)
 
     artist = relationship("Artist", back_populates="images")
     views = relationship("ImageView", back_populates="image")
